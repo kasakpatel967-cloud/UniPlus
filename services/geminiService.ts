@@ -2,7 +2,7 @@
 import { GoogleGenAI } from "@google/genai";
 
 // Initialize the Gemini API client using the environment variable directly as required.
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || 'FAKE_API_KEY_FOR_DEVELOPMENT' });
 
 export const getSmartCampusResponse = async (query: string, context: string) => {
   try {
