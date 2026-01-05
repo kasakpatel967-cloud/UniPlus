@@ -7,7 +7,8 @@ interface AssignmentsProps {
   user: User;
 }
 
-const Assignments: React.FC<AssignmentsProps> = ({ user }) => {
+// Using standard function declaration for better TypeScript prop inference
+export default function Assignments({ user }: AssignmentsProps) {
   const [submittedIds, setSubmittedIds] = useState<string[]>([]);
   const filtered = ASSIGNMENTS.filter(a => a.department === user.department || a.department === 'Common');
 
@@ -53,7 +54,7 @@ const Assignments: React.FC<AssignmentsProps> = ({ user }) => {
                   <div className="mt-8 space-y-4">
                     <div className="flex items-center gap-3">
                       <div className="w-8 h-8 rounded-full bg-slate-50 dark:bg-slate-900 flex items-center justify-center text-slate-400">
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2" /></svg>
                       </div>
                       <p className="text-xs font-black text-red-500 uppercase tracking-widest">Due: {item.dueDate}</p>
                     </div>
@@ -92,6 +93,4 @@ const Assignments: React.FC<AssignmentsProps> = ({ user }) => {
       )}
     </div>
   );
-};
-
-export default Assignments;
+}

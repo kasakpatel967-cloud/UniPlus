@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { User } from '../types';
 
 interface ProfileProps {
@@ -10,9 +10,30 @@ interface ProfileProps {
 const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
   const [editing, setEditing] = useState(false);
   const [formData, setFormData] = useState<User>(user);
-  const [showPasswordChange, setShowPasswordChange] = useState(false);
-  const [showPassToggle, setShowPassToggle] = useState(false);
+  const [hasProKey, setHasProKey] = useState(false);
+  
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const checkKey = async () => {
+      // @ts-ignore
+      if (window.aistudio) {
+        // @ts-ignore
+        const hasKey = await window.aistudio.hasSelectedApiKey();
+        setHasProKey(hasKey);
+      }
+    };
+    checkKey();
+  }, []);
+
+  const handleConnectKey = async () => {
+    // @ts-ignore
+    if (window.aistudio) {
+      // @ts-ignore
+      await window.aistudio.openSelectKey();
+      setHasProKey(true);
+    }
+  };
 
   const handleSave = () => {
     onUpdate(formData);
@@ -46,7 +67,7 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
              editing ? 'bg-purple-600 text-white shadow-lg shadow-purple-200' : 'bg-white dark:bg-slate-800 border-2 border-purple-50 dark:border-purple-900/30 text-slate-800 dark:text-white shadow-sm'
            }`}
          >
-           {editing ? 'Save Pulse' : 'Edit Pulse'}
+           {editing ? 'Save Profile' : 'Edit Pulse'}
          </button>
       </header>
 
@@ -83,14 +104,45 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
                <p className="text-xs font-bold text-fuchsia-500 uppercase mt-2 tracking-widest">{formData.studentId}</p>
             </div>
 
-            <div className="bg-white dark:bg-slate-800 p-8 card-shape border-2 border-purple-50 dark:border-purple-900/30 shadow-xl funky-shadow">
-               <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4">Account Security</h3>
+            <div className="bg-white dark:bg-slate-800 p-8 card-shape border-2 border-fuchsia-50 dark:border-fuchsia-900/30 shadow-xl funky-shadow relative overflow-hidden group">
+               <div className="absolute top-0 right-0 w-24 h-24 bg-fuchsia-500/5 rounded-full -mr-12 -mt-12 transition-transform group-hover:scale-150"></div>
+               <div className="flex items-center gap-3 mb-4">
+                  <div className={`w-3 h-3 rounded-full ${hasProKey ? 'bg-green-500 animate-pulse' : 'bg-slate-300'}`}></div>
+                  <h3 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-widest">AI Tier: {hasProKey ? 'Pro' : 'Standard'}</h3>
+               </div>
+               <p className="text-[10px] font-medium text-slate-500 dark:text-slate-400 mb-6 leading-relaxed">
+                 {hasProKey 
+                   ? "Premium features enabled. High-quality image generation is active." 
+                   : "Standard intelligence active. Connect a paid key to unlock advanced Visual Brain features."}
+               </p>
                <button 
-                onClick={() => setShowPasswordChange(true)}
-                className="w-full py-4 bg-purple-50 dark:bg-purple-900/30 text-[10px] font-black uppercase text-purple-600 dark:text-purple-300 rounded-2xl hover:bg-purple-600 hover:text-white transition-all shadow-inner"
+                onClick={handleConnectKey}
+                className="w-full py-4 bg-fuchsia-50 dark:bg-fuchsia-900/30 text-[10px] font-black uppercase text-fuchsia-600 dark:text-fuchsia-400 rounded-2xl hover:bg-fuchsia-600 hover:text-white transition-all shadow-inner border border-fuchsia-100 dark:border-fuchsia-900/30"
                >
-                 Change Password
+                 {hasProKey ? 'Manage AI Key' : 'Connect Paid Key'}
                </button>
+               {!hasProKey && (
+                 <a 
+                   href="https://ai.google.dev/gemini-api/docs/billing" 
+                   target="_blank" 
+                   rel="noopener noreferrer"
+                   className="block text-[8px] text-center font-black text-slate-400 uppercase tracking-widest mt-4 hover:text-fuchsia-500 transition-colors"
+                 >
+                   Setup Paid Project ↗
+                 </a>
+               )}
+            </div>
+
+            <div className="bg-white dark:bg-slate-800 p-8 card-shape border-2 border-green-50 dark:border-green-900/30 shadow-xl funky-shadow">
+               <h3 className="text-sm font-black text-slate-400 uppercase tracking-widest mb-4">Session Pulse</h3>
+               <div className="flex items-center gap-3 py-3 border-b border-slate-50 dark:border-slate-700">
+                  <div className="w-2 h-2 rounded-full bg-green-500"></div>
+                  <span className="text-[10px] font-black uppercase tracking-widest dark:text-white">Encrypted Connection</span>
+               </div>
+               <div className="flex items-center gap-3 py-3">
+                  <div className="w-2 h-2 rounded-full bg-purple-500"></div>
+                  <span className="text-[10px] font-black uppercase tracking-widest dark:text-white">Rotated JWT Active</span>
+               </div>
             </div>
          </div>
 
@@ -179,38 +231,6 @@ const Profile: React.FC<ProfileProps> = ({ user, onUpdate }) => {
             </div>
          </div>
       </div>
-
-      {showPasswordChange && (
-        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm flex items-center justify-center p-6 z-[100]">
-           <div className="bg-white dark:bg-slate-800 max-w-md w-full p-10 card-shape shadow-2xl animate-in zoom-in-95 duration-300 border-4 border-purple-100 dark:border-purple-900/30 funky-shadow">
-              <h2 className="text-2xl font-black text-slate-900 dark:text-white mb-8 uppercase tracking-tighter">Update Pulse</h2>
-              <div className="space-y-5">
-                 <div className="relative">
-                   <input type={showPassToggle ? "text" : "password"} placeholder="Current Pulse" className="w-full px-6 py-4 bg-purple-50 dark:bg-slate-900/50 rounded-2xl outline-none border-2 border-purple-100 dark:border-purple-900/30 focus:border-purple-500 transition-all dark:text-white" />
-                 </div>
-                 <div className="relative">
-                   <input type={showPassToggle ? "text" : "password"} placeholder="New Pulse" className="w-full px-6 py-4 bg-purple-50 dark:bg-slate-900/50 rounded-2xl outline-none border-2 border-purple-100 dark:border-purple-900/30 focus:border-purple-500 transition-all dark:text-white" />
-                   <button 
-                    type="button"
-                    onClick={() => setShowPassToggle(!showPassToggle)}
-                    className="absolute right-5 top-1/2 -translate-y-1/2 text-purple-400 hover:text-purple-600 transition-colors"
-                  >
-                    {showPassToggle ? (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l18 18" /></svg>
-                    ) : (
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>
-                    )}
-                  </button>
-                 </div>
-                 <input type={showPassToggle ? "text" : "password"} placeholder="Confirm New Pulse" className="w-full px-6 py-4 bg-purple-50 dark:bg-slate-900/50 rounded-2xl outline-none border-2 border-purple-100 dark:border-purple-900/30 focus:border-purple-500 transition-all dark:text-white" />
-              </div>
-              <div className="flex gap-4 mt-10">
-                 <button onClick={() => { alert('Pulse Updated!'); setShowPasswordChange(false); }} className="flex-1 py-4 bg-purple-600 text-white font-black rounded-2xl uppercase text-[10px] tracking-widest shadow-lg shadow-purple-200 transition-all hover:bg-purple-700">Update</button>
-                 <button onClick={() => setShowPasswordChange(false)} className="flex-1 py-4 bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-300 font-black rounded-2xl uppercase text-[10px] tracking-widest transition-all hover:bg-slate-200">Cancel</button>
-              </div>
-           </div>
-        </div>
-      )}
     </div>
   );
 };

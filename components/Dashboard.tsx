@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Notification, AttendanceRecord } from '../types';
 import { EVENTS, DEPARTMENTS, QUOTES, ASSIGNMENTS } from '../constants';
 
@@ -15,12 +15,16 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onNavigate, notifications, 
   const [selectedNote, setSelectedNote] = useState<Notification | null>(null);
   const [selectedCalendarDate, setSelectedCalendarDate] = useState<number | null>(null);
   const [showGaps, setShowGaps] = useState(false);
-  const [quoteIdx] = useState(() => Math.floor(Math.random() * QUOTES.length));
+  const [sessionUptime, setSessionUptime] = useState(0);
   
-  const quote = QUOTES[quoteIdx];
   const deptSlots = DEPARTMENTS.find(d => d.name === user.department)?.slots || DEPARTMENTS[0].slots;
   const todayClasses = deptSlots.slice(0, 2);
   const registeredCount = user.registeredEventIds?.length || 0;
+
+  useEffect(() => {
+    const timer = setInterval(() => setSessionUptime(p => p + 1), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // Real or Fallback Attendance
   const attendance = user.attendance || {
@@ -76,8 +80,8 @@ const Dashboard: React.FC<DashboardProps> = ({ user, onNavigate, notifications, 
                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
               </div>
               <div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Academic Season</p>
-                <p className="text-sm font-black text-slate-900 dark:text-white uppercase">Even Sem 2024-25</p>
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Security Hub</p>
+                <p className="text-sm font-black text-slate-900 dark:text-white uppercase">Active Pulse: {Math.floor(sessionUptime/60)}m {sessionUptime%60}s</p>
               </div>
            </div>
         </div>

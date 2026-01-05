@@ -1,5 +1,5 @@
 
-import { CampusEvent, Department, Notification, Scholarship, Assignment, Club, StudyGroup, SharedNote } from './types';
+import { CampusEvent, Department, Notification, Scholarship, Assignment, Club, StudyGroup, SharedNote, Sport, BorrowedBook } from './types';
 
 export const DEPARTMENTS: Department[] = [
   {
@@ -60,6 +60,82 @@ export const EVENTS: CampusEvent[] = [
     category: 'Technical',
     imageUrl: 'https://images.unsplash.com/photo-1485827404703-89b55fcc595e?auto=format&fit=crop&q=80&w=800',
     registrationLink: '#'
+  }
+];
+
+export const SPORTS: Sport[] = [
+  {
+    id: 's1',
+    name: 'Cricket',
+    description: 'BVM\'s flagship sports team. Known for strategic gameplay and competitive spirit.',
+    coach: 'Dr. K. S. Gandhi',
+    time: '04:30 PM - 06:30 PM',
+    venue: 'BVM Sports Ground',
+    imageUrl: 'https://images.unsplash.com/photo-1531415074968-036ba1b575da?auto=format&fit=crop&q=80&w=800',
+    members: 22
+  },
+  {
+    id: 's2',
+    name: 'Basketball',
+    description: 'Fast-paced action and precision. Join the squad for intense drills and tournaments.',
+    coach: 'Prof. R. M. Shah',
+    time: '05:00 PM - 07:00 PM',
+    venue: 'Basketball Courts',
+    imageUrl: 'https://images.unsplash.com/photo-1546519638-68e109498ffc?auto=format&fit=crop&q=80&w=800',
+    members: 15
+  },
+  {
+    id: 's3',
+    name: 'Football',
+    description: 'Experience the beautiful game. Focus on tactical training and stamina building.',
+    coach: 'Dr. M. S. Holia',
+    time: '04:00 PM - 06:00 PM',
+    venue: 'Main Field',
+    imageUrl: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&q=80&w=800',
+    members: 30
+  },
+  {
+    id: 's4',
+    name: 'Badminton',
+    description: 'Reflexes, agility, and power. Indoor court sessions for all skill levels.',
+    coach: 'Prof. A. A. Pandya',
+    time: '06:00 AM - 08:00 AM',
+    venue: 'Gymkhana Hall',
+    imageUrl: 'https://images.unsplash.com/photo-1626225967045-9410dd99fae4?auto=format&fit=crop&q=80&w=800',
+    members: 12
+  }
+];
+
+export const MOCK_BORROWED_BOOKS: BorrowedBook[] = [
+  {
+    id: 'b1',
+    title: 'Clean Code',
+    author: 'Robert C. Martin',
+    borrowDate: '2025-05-10',
+    dueDate: '2025-05-24',
+    category: 'Computer Science',
+    coverImage: 'https://images.unsplash.com/photo-1516116216624-53e697fedbea?auto=format&fit=crop&q=80&w=800',
+    status: 'Borrowed'
+  },
+  {
+    id: 'b2',
+    title: 'Digital Signal Processing',
+    author: 'John G. Proakis',
+    borrowDate: '2025-04-15',
+    dueDate: '2025-05-01',
+    category: 'Electronics',
+    coverImage: 'https://images.unsplash.com/photo-1558494949-ef010cbdcc51?auto=format&fit=crop&q=80&w=800',
+    status: 'Overdue'
+  },
+  {
+    id: 'b3',
+    title: 'The Great Gatsby',
+    author: 'F. Scott Fitzgerald',
+    borrowDate: '2025-05-18',
+    dueDate: '2025-06-01',
+    category: 'Fiction',
+    coverImage: 'https://images.unsplash.com/photo-1543004471-240ce47396b1?auto=format&fit=crop&q=80&w=800',
+    status: 'Renewed'
   }
 ];
 

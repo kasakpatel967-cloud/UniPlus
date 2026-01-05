@@ -21,6 +21,17 @@ export interface Attendance {
   };
 }
 
+export interface BorrowedBook {
+  id: string;
+  title: string;
+  author: string;
+  borrowDate: string;
+  dueDate: string;
+  category: string;
+  coverImage: string;
+  status: 'Borrowed' | 'Overdue' | 'Renewed';
+}
+
 export interface User {
   studentId: string;
   name: string;
@@ -32,7 +43,16 @@ export interface User {
   photo?: string;
   registeredEventIds?: string[];
   joinedClubIds?: string[];
+  joinedSportIds?: string[];
   attendance?: Attendance;
+  borrowedBooks?: BorrowedBook[];
+}
+
+export interface AuthSession {
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: number;
+  user: User;
 }
 
 export interface SharedNote {
@@ -42,6 +62,7 @@ export interface SharedNote {
   sender: string;
   timestamp: string;
   size: string;
+  url?: string;
 }
 
 export interface CampusEvent {
@@ -54,6 +75,17 @@ export interface CampusEvent {
   category: CampusEventCategory;
   imageUrl: string;
   registrationLink: string;
+}
+
+export interface Sport {
+  id: string;
+  name: string;
+  description: string;
+  coach: string;
+  time: string;
+  venue: string;
+  imageUrl: string;
+  members: number;
 }
 
 export interface TimetableSlot {
@@ -114,4 +146,4 @@ export interface StudyGroup {
   notes?: SharedNote[];
 }
 
-export type View = 'Dashboard' | 'Events' | 'Timetable' | 'Assistant' | 'Clubs' | 'Scholarships' | 'StudyGroup' | 'Assignments' | 'Profile' | 'History';
+export type View = 'Dashboard' | 'Events' | 'Timetable' | 'Assistant' | 'Clubs' | 'Scholarships' | 'StudyGroup' | 'Assignments' | 'Sports' | 'Profile' | 'History' | 'Library';

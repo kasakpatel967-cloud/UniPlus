@@ -1,6 +1,6 @@
 
-import React, { useState, useEffect } from 'react';
-import { View, User, Notification, StudyGroup } from './types';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, User, Notification, StudyGroup, AuthSession } from './types';
 import Sidebar from './components/Sidebar';
 import Dashboard from './components/Dashboard';
 import Timetable from './components/Timetable';
@@ -9,18 +9,20 @@ import Clubs from './components/Clubs';
 import Scholarships from './components/Scholarships';
 import GroupStudy from './components/StudyGroup';
 import Assignments from './components/Assignments';
+import Sports from './components/Sports';
 import Profile from './components/Profile';
 import History from './components/History';
+import Library from './components/Library';
 import SmartAssistant from './components/SmartAssistant';
-import Auth from './components/Auth';
 import Logo from './components/Logo';
+import Auth from './components/Auth';
+import { authService } from './services/authService';
 import { INITIAL_NOTIFICATIONS, STUDY_GROUPS } from './constants';
 
 const App: React.FC = () => {
-  const [user, setUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('uniplus_user');
-    return saved ? JSON.parse(saved) : null;
-  });
+  const [session, setSession] = useState<AuthSession | null>(() => authService.getSession());
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const user = session?.user || null;
 
   const [notifications, setNotifications] = useState<Notification[]>(() => {
     const saved = localStorage.getItem('uniplus_notifications');
@@ -37,19 +39,76 @@ const App: React.FC = () => {
   });
 
   const [currentView, setCurrentView] = useState<View>('Dashboard');
-  const [isDark, setIsDark] = useState(false);
+  
+  const [isDark, setIsDark] = useState<boolean>(() => {
+    const saved = localStorage.getItem('uniplus_darkmode');
+    return saved ? JSON.parse(saved) : false;
+  });
+  
   const [isFullScreen, setIsFullScreen] = useState(false);
 
+  const handleAuth = (newSession: AuthSession) => {
+    setSession(newSession);
+    setCurrentView('Dashboard');
+  };
+
+  const handleLogout = useCallback(() => {
+    authService.logout();
+    setSession(null);
+    setCurrentView('Dashboard');
+  }, []);
+
+  // Secure Session Monitor (Heartbeat)
   useEffect(() => {
-    if (isDark) document.documentElement.classList.add('dark');
-    else document.documentElement.classList.remove('dark');
-  }, [isDark]);
+    if (!session) return;
+
+    const checkSession = async () => {
+      const now = Date.now();
+      const timeLeft = session.expiresAt - now;
+
+      // Refresh 1 minute before expiry
+      if (timeLeft < 60000 && timeLeft > 0 && !isRefreshing) {
+        setIsRefreshing(true);
+        try {
+          const newSession = await authService.refreshSession();
+          if (newSession) setSession(newSession);
+        } catch (err) {
+          console.error("Session rotation failed:", err);
+          handleLogout();
+        } finally {
+          setIsRefreshing(false);
+        }
+      } else if (timeLeft <= 0) {
+        handleLogout();
+      }
+    };
+
+    const interval = setInterval(checkSession, 10000);
+    return () => clearInterval(interval);
+  }, [session, isRefreshing, handleLogout]);
+
+  const handleUpdateUser = useCallback((updatedUser: User | null) => {
+    if (updatedUser && session) {
+      const newSession = { ...session, user: updatedUser };
+      setSession(newSession);
+      localStorage.setItem('uniplus_session', JSON.stringify(newSession));
+      
+      const accounts = JSON.parse(localStorage.getItem('uniplus_accounts') || '[]');
+      const updatedAccounts = accounts.map((acc: any) => 
+        acc.studentId === updatedUser.studentId ? { ...acc, profile: updatedUser } : acc
+      );
+      localStorage.setItem('uniplus_accounts', JSON.stringify(updatedAccounts));
+    }
+  }, [session]);
 
   useEffect(() => {
-    if (user) {
-      localStorage.setItem('uniplus_user', JSON.stringify(user));
+    localStorage.setItem('uniplus_darkmode', JSON.stringify(isDark));
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
     }
-  }, [user]);
+  }, [isDark]);
 
   useEffect(() => {
     localStorage.setItem('uniplus_notifications', JSON.stringify(notifications));
@@ -98,14 +157,14 @@ const App: React.FC = () => {
   };
 
   if (!user) {
-    return <Auth onAuth={setUser} />;
+    return <Auth onAuth={handleAuth} />;
   }
 
   const renderView = () => {
     switch (currentView) {
       case 'Dashboard': return (
         <Dashboard 
-          user={user} 
+          user={user!} 
           onNavigate={setCurrentView} 
           notifications={notifications} 
           onMarkRead={markNotificationRead}
@@ -113,35 +172,26 @@ const App: React.FC = () => {
         />
       );
       case 'Timetable': return <Timetable />;
-      case 'Events': return <Events user={user} onUpdateUser={setUser} onAddNotification={addNotification} />;
-      case 'Clubs': return <Clubs user={user} onUpdateUser={setUser} />;
+      case 'Events': return <Events user={user!} onUpdateUser={handleUpdateUser} onAddNotification={addNotification} />;
+      case 'Clubs': return <Clubs user={user!} onUpdateUser={handleUpdateUser} />;
       case 'Scholarships': return <Scholarships />;
       case 'StudyGroup': return <GroupStudy groups={groups} setGroups={setGroups} activeGroupId={activeGroupId} setActiveGroupId={setActiveGroupId} />;
-      case 'Assignments': return <Assignments user={user} />;
-      case 'Profile': return <Profile user={user} onUpdate={setUser} />;
-      case 'History': return <History user={user} />;
+      case 'Assignments': return <Assignments user={user!} />;
+      case 'Sports': return <Sports user={user!} onUpdateUser={handleUpdateUser} />;
+      case 'Profile': return <Profile user={user!} onUpdate={handleUpdateUser} />;
+      case 'History': return <History />;
+      case 'Library': return <Library user={user!} />;
       case 'Assistant': return <SmartAssistant />;
-      default: return <Dashboard user={user} onNavigate={setCurrentView} notifications={notifications} onMarkRead={markNotificationRead} onClearAll={clearAllNotifications} />;
-    }
-  };
-
-  const handleLogout = () => {
-    if(confirm("Confirm: Terminate your current UniPlus secure session?")) {
-      // Complete reset of active session data
-      localStorage.removeItem('uniplus_user');
-      localStorage.removeItem('uniplus_active_group');
-      setActiveGroupId(null);
-      setCurrentView('Dashboard');
-      setUser(null);
+      default: return <Dashboard user={user!} onNavigate={setCurrentView} notifications={notifications} onMarkRead={markNotificationRead} onClearAll={clearAllNotifications} />;
     }
   };
 
   return (
-    <div className={`min-h-screen flex transition-colors duration-500 ${isDark ? 'dark' : ''}`}>
+    <div className={`min-h-screen flex transition-colors duration-500 bg-pattern ${isDark ? 'dark bg-slate-950' : 'bg-[#fdfaff]'}`}>
       <Sidebar 
         currentView={currentView} 
         onNavigate={setCurrentView} 
-        user={user} 
+        user={user!} 
         onLogout={handleLogout}
         isDark={isDark}
         toggleDark={() => setIsDark(!isDark)}
@@ -150,6 +200,16 @@ const App: React.FC = () => {
       />
       
       <main className="flex-1 ml-20 md:ml-72 p-6 md:p-10 lg:p-12 overflow-x-hidden min-h-screen relative">
+        {/* Session Expiry Warning */}
+        {session && session.expiresAt - Date.now() < 60000 && session.expiresAt - Date.now() > 0 && (
+          <div className="fixed top-4 left-1/2 -translate-x-1/2 z-[200] animate-bounce">
+             <div className="bg-red-500 text-white px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-2xl flex items-center gap-3">
+               <div className="w-2 h-2 bg-white rounded-full animate-pulse"></div>
+               Pulse Expiring: Auto-Renewing...
+             </div>
+          </div>
+        )}
+
         <div className="absolute top-12 right-12 flex gap-4 z-40">
            <button 
              onClick={toggleFullScreen}
